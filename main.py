@@ -1,25 +1,49 @@
 import yfinance as yf
+import pandas as pd
+
 ######IN-PROGRESS#####
 
 #Hub for company info functions | Maybe throw into class for ORGANIZATION -_-
 def companyInfo(tic: str, interval: str):
-    company = yf.Ticker(tic)
-    stockHist = company.history(period=interval)
     
+    company = yf.Ticker(tic)
+    companyInfo = company.info
+    recommendation = firmRecommendations(company)
+    sharesNow = companyInfo['sharesShort']
+    sharesPrior = companyInfo['sharesShortPriorMonth']
+    sharesNow = f'{sharesNow:,d}'
+    sharesPrior = f'{sharesPrior:,d}'
+    
+    df = pd.DataFrame([companyInfo['shortName'], companyInfo['regularMarketPrice'], companyInfo['dayHigh'], companyInfo['dayLow'], companyInfo['fiftyTwoWeekHigh'], 
+                                  companyInfo['fiftyTwoWeekLow'], sharesNow, sharesPrior, companyInfo['shortRatio'], companyInfo['pegRatio']], 
+                                  index=['Name', 'Stock Price', 'Day High', 'Day Low', '52 Week High', '52 Week Low', 'Shares Short', 'Shares Short Prior Month', 'Short Ratio', 'PEG Ratio'], 
+                                  columns=['Data'], )
+    df.style.set_properties(**{'text-align': 'left'})
+    
+    return(df)
+
+    
+
+
+    
+
+
+
+
+
 #Looks through firm recommendations and pulls all signals | Future: Catalog all signals for analysis
 def firmRecommendations(company):
-    buys,  = 0
-    firmRec = company.recommendations['To Grade']
-    for df in firmRec:
-        print(df)
-        if 'Buy' in df:
-            buys+=1
-    print(len(company.recommendations))
-
-
-
-
-
+    recomF = company.recommendations['Firm']
+    recomC = company.recommendations['To Grade']
+    buys = 0
+    firmList = []
+    firmRec = []
+    for i in range(len(recomF)):
+        if recomF[i] not in firmList:
+            firmList.append(recomF[i])
+            firmRec.append(recomC)   
+    
+    return  {'Firm':firmList, 'Recommendation': firmRec}
 
 #Translates the input into usable strings
 def intervalTran(periodT: list) -> list:
@@ -40,4 +64,6 @@ def main():
     print(companyInfo(limits[0], limits[1]))
     
 
+
+ 
 main()
